@@ -17,9 +17,16 @@ def save_translation_image():
 
 
 @app.route('/barcode/<barcode_number>', methods=['GET'])
-def crawl_with_brcode(barcode_number):
+def crawl_product_info_barcode(barcode_number):
     # 바코드 번호 받아와서 해당 번호로 크롤링 진행
     return crawl.crawl_with_barcode(barcode_number)
+
+
+@app.route('/products/')
+def crawl_product_info_name():
+    product_name = request.args.get('name')
+    page = request.args.get('page')
+    return crawl.crawl_with_name(product_name, page)
 
 
 if __name__ == '__main__':
