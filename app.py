@@ -1,4 +1,4 @@
-from flask import Flask, jsonify
+from flask import Flask, jsonify, current_app
 from flask import Blueprint, request
 from werkzeug.utils import secure_filename
 import translation, crawl

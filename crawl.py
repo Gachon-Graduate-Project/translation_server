@@ -1,8 +1,18 @@
 from flask import jsonify
 from bs4 import BeautifulSoup
 import requests
-from urllib.request import urlopen
+import urllib
+import json
+import re
 from urllib.parse import quote 
+
+NAVER_API_CLIENT_ID = 'oKHFL3nkRMygm45ZyMuy'
+NAVER_API_CLIENT_SECRET = 'Gueo9fY5J1'
+
+def cleanhtml(raw_html):
+  cleanr = re.compile('<.*?>|&([a-z0-9]+|#[0-9]{1,6}|#x[0-9a-f]{1,6});')
+  cleantext = re.sub(cleanr, '', raw_html)
+  return cleantext
 
 # 바코드 번호 입력받아서 crawling
 def crawl_with_barcode(barcode):
@@ -29,11 +39,34 @@ def crawl_with_barcode(barcode):
 
 # 입력받은 상품명으로 네이버쇼핑 크롤링
 def crawl_with_name(name, page):
-    url = "https://search.shopping.naver.com/search/all?frm=NVSHMDL&origQuery=&pagingIndex={}&pagingSize=10&productSet=model&query={}&sort=price_asc&timestamp=&viewType=list".format(page, quote(name))
-    soup = BeautifulSoup(urlopen(url), 'html.parser')
+    result = []
+    try:
+        url = 'https://openapi.naver.com/v1/search/shop?query={}&display={}'.format(quote(name), page)
+        request = urllib.request.Request(url)
+        request.add_header('X-Naver-Client-Id', NAVER_API_CLIENT_ID)
+        request.add_header('X-Naver-Client-Secret', NAVER_API_CLIENT_SECRET)
+
+        response = urllib.request.urlopen(request)
+        search_result = json.loads(response.read().decode('utf-8'))['items']
+        
+        for product in search_result:
+            title = cleanhtml(product['title'])   # 상품 이름
+            image = product['image']   # 상품 이미지
+            lprice = product['lprice']   # 상품 가격 (최저가)
+            mallName = product['mallName']   # 상품 판매처
+            link = product['link']   # 상품에 대한 링크 (최저가 판매 사이트 링크로 들어갈 수 있음)
+
+            product_json = {
+                'title': title,
+                'image': image,
+                'lprice': lprice,
+                'mallName': mallName,
+                'link': link
+            }
+            result.append(product_json)
+    except ValueError:
+        raise '해당 상품명에 대한 검색 결과가 없습니다.'
     
-    
-
-
-
-crawl_with_name('감자칩', 1)
+    return jsonify({
+        'search_result': result
+    })
