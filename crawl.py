@@ -6,8 +6,10 @@ import json
 import re
 from urllib.parse import quote 
 
-NAVER_API_CLIENT_ID = 'oKHFL3nkRMygm45ZyMuy'
-NAVER_API_CLIENT_SECRET = 'Gueo9fY5J1'
+secret_path = './secret.json'
+with open(secret_path, 'r') as file:
+    naver_secret = json.load(file)
+
 
 def cleanhtml(raw_html):
   cleanr = re.compile('<.*?>|&([a-z0-9]+|#[0-9]{1,6}|#x[0-9a-f]{1,6});')
@@ -43,8 +45,8 @@ def crawl_with_name(name, page):
     try:
         url = 'https://openapi.naver.com/v1/search/shop?query={}&display={}'.format(quote(name), page)
         request = urllib.request.Request(url)
-        request.add_header('X-Naver-Client-Id', NAVER_API_CLIENT_ID)
-        request.add_header('X-Naver-Client-Secret', NAVER_API_CLIENT_SECRET)
+        request.add_header('X-Naver-Client-Id', naver_secret['NAVER_API_CLIENT_ID'])
+        request.add_header('X-Naver-Client-Secret', naver_secret['NAVER_API_CLIENT_SECRET'])
 
         response = urllib.request.urlopen(request)
         search_result = json.loads(response.read().decode('utf-8'))['items']
